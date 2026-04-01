@@ -19,10 +19,5 @@
     <PackageReference Include="System.Management" Version="9.0.0" />
   </ItemGroup>
 
-  <!-- Copia el ícono y parcha el manifiesto ClickOnce para el acceso directo anclado -->
-  <Target Name="PatchClickOnceManifest" AfterTargets="Publish">
-    <Copy SourceFiles="Assets\app.ico" DestinationFolder="$(PublishDir)" />
-    <Exec Command="powershell -NoProfile -Command &quot;$manifest = Get-Item '$(PublishDir)*.application' | Select-Object -First 1; if ($manifest) { [xml]$xml = Get-Content $manifest.FullPath -Encoding UTF8; $ns = 'urn:schemas-microsoft-com:asm.v2'; $desc = $xml.assembly.description; if ($desc -ne $null) { $desc.SetAttribute('iconFile', $ns, 'app.ico'); $xml.Save($manifest.FullPath); Write-Host 'Parcheado: ' + $manifest.FullPath } }&quot;" />
-  </Target>
 
 </Project>

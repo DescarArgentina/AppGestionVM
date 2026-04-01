@@ -55,7 +55,8 @@ namespace AppGestionDeVM.Services
                         Activa,
                         EstadoActual,
                         OrdenBoton,
-                        RutaVMX
+                        RutaVMX,
+                        UsuarioEncendio
                     FROM dbo.MaquinasVirtuales
                     WHERE Activa = 1
                     ORDER BY OrdenBoton, NombreVM";
@@ -75,13 +76,91 @@ namespace AppGestionDeVM.Services
                             Activa = Convert.ToBoolean(reader["Activa"]),
                             EstadoActual = reader["EstadoActual"]?.ToString() ?? string.Empty,
                             OrdenBoton = Convert.ToInt32(reader["OrdenBoton"]),
-                            RutaVMX = reader["RutaVMX"]?.ToString() ?? string.Empty
+                            RutaVMX = reader["RutaVMX"]?.ToString() ?? string.Empty,
+                            UsuarioEncendio = reader["UsuarioEncendio"]?.ToString() ?? string.Empty
                         });
                     }
                 }
             }
 
             return lista;
+        }
+
+        public void ActualizarEstadoVM(int idVM, string estado)
+        {
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                conn.Open();
+                string query = "UPDATE [dbo].[MaquinasVirtuales] SET [EstadoActual] = @Estado WHERE [IdVM] = @IdVM";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@IdVM", idVM);
+                    cmd.Parameters.AddWithValue("@Estado", estado);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void ActualizarUsuarioEncendio(int idVM, string usuario)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"[BD] Iniciando actualización: IdVM={idVM}, Usuario={usuario}");
+
+                using (SqlConnection conn = new SqlConnection(_connectionString))
+                {
+                    conn.Open();
+                    System.Diagnostics.Debug.WriteLine($"[BD] Conexión abierta");
+
+                    // Verificar que la VM existe
+                    string checkQuery = "SELECT COUNT(*) FROM [dbo].[MaquinasVirtuales] WHERE [IdVM] = @IdVM";
+                    using (SqlCommand checkCmd = new SqlCommand(checkQuery, conn))
+                    {
+                        checkCmd.Parameters.AddWithValue("@IdVM", idVM);
+                        int count = (int)checkCmd.ExecuteScalar();
+                        System.Diagnostics.Debug.WriteLine($"[BD] VMs encontradas con IdVM={idVM}: {count}");
+
+                        if (count == 0)
+                        {
+                            throw new Exception($"No existe VM con IdVM={idVM}");
+                        }
+                    }
+
+                    // Hacer el UPDATE
+                    string updateQuery = "UPDATE [dbo].[MaquinasVirtuales] SET [UsuarioEncendio] = @Usuario WHERE [IdVM] = @IdVM";
+                    using (SqlCommand updateCmd = new SqlCommand(updateQuery, conn))
+                    {
+                        updateCmd.Parameters.AddWithValue("@IdVM", idVM);
+
+                        // Usar el usuario tal como viene
+                        if (string.IsNullOrWhiteSpace(usuario))
+                        {
+                            updateCmd.Parameters.AddWithValue("@Usuario", DBNull.Value);
+                        }
+                        else
+                        {
+                            updateCmd.Parameters.AddWithValue("@Usuario", usuario.Trim());
+                        }
+
+                        int rowsAffected = updateCmd.ExecuteNonQuery();
+                        System.Diagnostics.Debug.WriteLine($"[BD] UPDATE ejecutado - Filas afectadas: {rowsAffected}");
+
+                        if (rowsAffected > 0)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[BD] ✓ Actualización exitosa: IdVM={idVM}, Usuario={usuario}");
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[BD] ⚠ UPDATE no actualizó filas");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[BD] ✗ Error: {ex.Message}");
+                throw;
+            }
         }
     }
 }

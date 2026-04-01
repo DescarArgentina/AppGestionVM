@@ -15,7 +15,30 @@
 
     <Window.Resources>
         <conv:EstadoColorConverter    x:Key="EstadoColorConverter"/>
-        <conv:EstadoEncendibleConverter x:Key="EstadoEncendibleConverter"/>
+        <conv:EstadoVisibilidadConverter x:Key="EstadoVisibilidadConverter"/>
+        <conv:StringNullToVisibilityConverter x:Key="StringNullToVisibilityConverter"/>
+
+        <!-- Estilo para el tooltip de usuario que encendió la VM -->
+        <Style x:Key="VMToolTipStyle" TargetType="ToolTip">
+            <Setter Property="Background" Value="#1C2D4A"/>
+            <Setter Property="Foreground" Value="#E0E0E0"/>
+            <Setter Property="BorderBrush" Value="#6A95FF"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToolTip">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
         <!-- Botón de ventana (minimizar / cerrar) -->
         <Style x:Key="WinBtnStyle" TargetType="Button">
@@ -76,6 +99,9 @@
                     <Setter Property="Foreground"  Value="#2A3F60"/>
                     <Setter Property="Cursor"      Value="Arrow"/>
                 </Trigger>
+                <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=Content}" Value="Conectar">
+                    <Setter Property="Background" Value="#7C3AED"/>
+                </DataTrigger>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="#5580E0"/>
                 </Trigger>
@@ -204,10 +230,37 @@
                                 Margin="8"
                                 Background="#0C1524"
                                 CornerRadius="12"
-                                Padding="18,16">
+                                Padding="18,16"
+                                ToolTipService.IsEnabled="{Binding EstadoActual, Converter={StaticResource EstadoVisibilidadConverter}}">
                             <Border.Effect>
                                 <DropShadowEffect Color="#000000" BlurRadius="14" ShadowDepth="3" Opacity="0.35"/>
                             </Border.Effect>
+                            <Border.ToolTip>
+                                <ToolTip Style="{StaticResource VMToolTipStyle}">
+                                    <StackPanel>
+                                        <TextBlock Text="Prendida por:"
+                                                   Foreground="#6A95FF"
+                                                   FontSize="11"
+                                                   FontWeight="SemiBold"
+                                                   Margin="0,0,0,4"/>
+                                        <TextBlock FontSize="13" FontWeight="SemiBold">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="White"/>
+                                                    <Setter Property="Text" Value="{Binding UsuarioEncendio}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding UsuarioEncendio, Converter={StaticResource StringNullToVisibilityConverter}}" Value="{x:Static Visibility.Collapsed}">
+                                                            <Setter Property="Text" Value="(desconocido)"/>
+                                                            <Setter Property="Foreground" Value="#8899BB"/>
+                                                            <Setter Property="FontStyle" Value="Italic"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </ToolTip>
+                            </Border.ToolTip>
                             <StackPanel>
                                 <!-- Nombre VM -->
                                 <TextBlock Text="{Binding NombreVM}"
@@ -236,10 +289,10 @@
                                 </Border>
 
                                 <!-- Botón encender -->
-                                <Button Content="Encender"
+                                <Button Content="{Binding TextoBotonAccion}"
                                         Style="{StaticResource EncenderBtnStyle}"
                                         Click="BtnEncender_Click"
-                                        IsEnabled="{Binding EstadoActual, Converter={StaticResource EstadoEncendibleConverter}}"/>
+                                        IsEnabled="{Binding BotonAccionHabilitado}"/>
                             </StackPanel>
                         </Border>
                     </DataTemplate>

@@ -1,21 +1,23 @@
 using System.Globalization;
+using System.Windows;
 using System.Windows.Data;
 
 namespace AppGestionDeVM.Converters
 {
-    public class EstadoBotonConverter : IValueConverter
+    public class StringNullToVisibilityConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return value?.ToString()?.ToLowerInvariant() switch
+            if (value is string str && !string.IsNullOrWhiteSpace(str))
             {
-                "encendida" => "Ejecutar",
-                "apagada" => "Encender",
-                _ => "..."
-            };
+                return Visibility.Visible;
+            }
+            return Visibility.Collapsed;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-            => throw new NotImplementedException();
+        {
+            throw new NotImplementedException();
+        }
     }
 }

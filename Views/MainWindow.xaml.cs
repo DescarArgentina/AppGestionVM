@@ -51,9 +51,29 @@ namespace AppGestionDeVM
             try
             {
                 var lista = await Task.Run(() => new VmService().ObtenerMaquinasActivas());
-                _maquinas.Clear();
+
+                // Eliminar VMs que ya no están activas
+                var nuevosIds = lista.Select(v => v.IdVM).ToHashSet();
+                for (int i = _maquinas.Count - 1; i >= 0; i--)
+                    if (!nuevosIds.Contains(_maquinas[i].IdVM))
+                        _maquinas.RemoveAt(i);
+
+                // Actualizar existentes / agregar nuevas (preserva RdpListo e Iniciando)
                 foreach (var vm in lista)
-                    _maquinas.Add(vm);
+                {
+                    var existente = _maquinas.FirstOrDefault(v => v.IdVM == vm.IdVM);
+                    if (existente == null)
+                    {
+                        _maquinas.Add(vm);
+                    }
+                    else
+                    {
+                        existente.NombreVM = vm.NombreVM;
+                        existente.RutaVMX = vm.RutaVMX;
+                        existente.UsuarioEncendio = vm.UsuarioEncendio;
+                        existente.OrdenBoton = vm.OrdenBoton;
+                    }
+                }
 
                 await ActualizarEstados();
             }
@@ -71,8 +91,25 @@ namespace AppGestionDeVM
                 var svc = new VmwareService();
                 var encendidas = await Task.Run(() => svc.ObtenerRutasVmsEncendidas());
 
+                var svcDb = new VmService();
                 foreach (var vm in _maquinas)
-                    vm.EstadoActual = encendidas.Contains(vm.RutaVMX) ? "Encendida" : "Apagada";
+                {
+                    string nuevoEstado = encendidas.Contains(vm.RutaVMX) ? "Encendida" : "Apagada";
+                    if (vm.EstadoActual != nuevoEstado)
+                    {
+                        vm.EstadoActual = nuevoEstado;
+                        if (!string.Equals(nuevoEstado, "Encendida", StringComparison.OrdinalIgnoreCase))
+                            vm.RdpListo = false;
+                        await Task.Run(() => svcDb.ActualizarEstadoVM(vm.IdVM, nuevoEstado));
+                    }
+                }
+
+                // ── Auto-iniciar monitoreo para VMs ya encendidas sin RDP listo ──
+                foreach (var vm in _maquinas)
+                {
+                    if (vm.EstadoActual == "Encendida" && !vm.RdpListo && !_vmsMonitoreandoRdp.Contains(vm.RutaVMX))
+                        _vmsMonitoreandoRdp.Add(vm.RutaVMX);
+                }
 
                 // ── Monitoreo RDP ──
                 foreach (var vm in _maquinas)
@@ -99,6 +136,7 @@ namespace AppGestionDeVM
                             _vmsMonitoreandoRdp.Remove(ruta);
                             _rdpDeteccionEnCurso.Remove(ruta);
                             _rdpMomento.Remove(ruta);
+                            vm.RdpListo = true;
                             MostrarNotificacionRdp(vm.NombreVM, ip);
                         }
                         else
@@ -153,11 +191,38 @@ namespace AppGestionDeVM
                 return;
             }
 
+            if (string.Equals(vm.EstadoActual, "Encendida", StringComparison.OrdinalIgnoreCase))
+            {
+                await EjecutarConexionRemota(vm);
+                return;
+            }
+
             btn.IsEnabled = false;
+            vm.RdpListo = false;
             _vmsMonitoreandoRdp.Add(vm.RutaVMX);
             try
             {
+                System.Diagnostics.Debug.WriteLine($"[INFO] Encendiendo VM: IdVM={vm.IdVM}, NombreVM={vm.NombreVM}");
                 await Task.Run(() => new VmwareService().EncenderVM(vm.RutaVMX));
+
+                // Actualizar el usuario que encendió la VM en la BD
+                try
+                {
+                    string usuarioLogueado = _usuarioLogueado.Usuario ?? "(sin usuario)";
+                    System.Diagnostics.Debug.WriteLine($"[INFO] Guardando usuario: IdVM={vm.IdVM}, Usuario={usuarioLogueado}");
+
+                    await Task.Run(() => new VmService().ActualizarUsuarioEncendio(vm.IdVM, usuarioLogueado));
+                    vm.UsuarioEncendio = usuarioLogueado;
+
+                    System.Diagnostics.Debug.WriteLine($"[INFO] Usuario guardado exitosamente");
+                }
+                catch (Exception exDB)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ERROR] Fallo al guardar usuario: {exDB.Message}");
+                    MessageBox.Show($"Error al guardar usuario en BD:\n{exDB.Message}", "Error de base de datos",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+
                 await Task.Delay(5000);
                 await ActualizarEstados();
             }
@@ -169,6 +234,39 @@ namespace AppGestionDeVM
             finally
             {
                 btn.IsEnabled = true;
+            }
+        }
+
+        private async Task EjecutarConexionRemota(MaquinaVirtual vm)
+        {
+            try
+            {
+                var svc = new VmwareService();
+                string? ip = await Task.Run(() => svc.LeerEstadoRDP(vm.RutaVMX));
+
+                if (!Regex.IsMatch(ip ?? string.Empty, @"^\d+\.\d+\.\d+\.\d+$"))
+                {
+                    _vmsMonitoreandoRdp.Add(vm.RutaVMX);
+                    _rdpDeteccionEnCurso.Remove(vm.RutaVMX);
+                    _rdpMomento.Remove(vm.RutaVMX);
+
+                    await Task.Run(() => svc.LanzarDeteccionRDP(vm.RutaVMX));
+                    MessageBox.Show(
+                        "La VM está encendida, pero todavía no tenemos la IP de Escritorio Remoto. " +
+                        "Estamos validando la conexión y te va a aparecer el aviso cuando esté lista.",
+                        "Conexión RDP en preparación",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                    return;
+                }
+
+                _rdpIpActual = ip;
+                Process.Start("mstsc.exe", $"/v:{ip}");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"No se pudo abrir el Escritorio Remoto:\n{ex.Message}", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
