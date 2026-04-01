@@ -6,7 +6,8 @@
         xmlns:conv="clr-namespace:AppGestionDeVM.Converters"
         mc:Ignorable="d"
         Title="GestionVM"
-        Width="880" Height="580"
+        Width="880"
+        Height="580"
         WindowStyle="None"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
@@ -14,11 +15,10 @@
         Icon="/Assets/logo.png">
 
     <Window.Resources>
-        <conv:EstadoColorConverter    x:Key="EstadoColorConverter"/>
+        <conv:EstadoColorConverter x:Key="EstadoColorConverter"/>
         <conv:EstadoVisibilidadConverter x:Key="EstadoVisibilidadConverter"/>
         <conv:StringNullToVisibilityConverter x:Key="StringNullToVisibilityConverter"/>
 
-        <!-- Estilo para el tooltip de usuario que encendió la VM -->
         <Style x:Key="VMToolTipStyle" TargetType="ToolTip">
             <Setter Property="Background" Value="#1C2D4A"/>
             <Setter Property="Foreground" Value="#E0E0E0"/>
@@ -40,15 +40,14 @@
             </Setter>
         </Style>
 
-        <!-- Botón de ventana (minimizar / cerrar) -->
         <Style x:Key="WinBtnStyle" TargetType="Button">
-            <Setter Property="Width"           Value="30"/>
-            <Setter Property="Height"          Value="30"/>
-            <Setter Property="Foreground"      Value="#8899BB"/>
-            <Setter Property="Background"      Value="Transparent"/>
+            <Setter Property="Width" Value="30"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Foreground" Value="#8899BB"/>
+            <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="FontSize"        Value="14"/>
-            <Setter Property="Cursor"          Value="Hand"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -70,20 +69,19 @@
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="#4A1A1A"/>
-                    <Setter Property="Foreground"  Value="#FF6666"/>
+                    <Setter Property="Foreground" Value="#FF6666"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
-        <!-- Botón Encender dentro de cada tarjeta -->
         <Style x:Key="EncenderBtnStyle" TargetType="Button">
-            <Setter Property="Background"      Value="#6A95FF"/>
-            <Setter Property="Foreground"      Value="White"/>
-            <Setter Property="FontSize"        Value="13"/>
-            <Setter Property="FontWeight"      Value="SemiBold"/>
+            <Setter Property="Background" Value="#6A95FF"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Height"          Value="34"/>
-            <Setter Property="Cursor"          Value="Hand"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -96,8 +94,8 @@
             <Style.Triggers>
                 <Trigger Property="IsEnabled" Value="False">
                     <Setter Property="Background" Value="#0F1E35"/>
-                    <Setter Property="Foreground"  Value="#2A3F60"/>
-                    <Setter Property="Cursor"      Value="Arrow"/>
+                    <Setter Property="Foreground" Value="#2A3F60"/>
+                    <Setter Property="Cursor" Value="Arrow"/>
                 </Trigger>
                 <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=Content}" Value="Conectar">
                     <Setter Property="Background" Value="#7C3AED"/>
@@ -108,15 +106,14 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Botón Actualizar del footer -->
         <Style x:Key="ActualizarBtnStyle" TargetType="Button">
-            <Setter Property="Background"      Value="#111E33"/>
-            <Setter Property="Foreground"      Value="#6A95FF"/>
-            <Setter Property="FontSize"        Value="12"/>
-            <Setter Property="FontWeight"      Value="SemiBold"/>
+            <Setter Property="Background" Value="#111E33"/>
+            <Setter Property="Foreground" Value="#6A95FF"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding"         Value="16,6"/>
-            <Setter Property="Cursor"          Value="Hand"/>
+            <Setter Property="Padding" Value="16,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -138,18 +135,19 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="44"/>   <!-- barra de título -->
-            <RowDefinition Height="68"/>   <!-- info de usuario -->
-            <RowDefinition Height="*"/>    <!-- tarjetas VM -->
-            <RowDefinition Height="46"/>   <!-- footer -->
+            <RowDefinition Height="44"/>
+            <RowDefinition Height="68"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="46"/>
         </Grid.RowDefinitions>
 
-        <!-- ── Barra de título ── -->
-        <Grid Grid.Row="0" Background="#060D18"
+        <Grid Grid.Row="0"
+              Background="#060D18"
               MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
                 <Image Source="/Assets/logo.png"
-                       Width="22" Height="22"
+                       Width="22"
+                       Height="22"
                        Margin="0,0,8,0"
                        RenderOptions.BitmapScalingMode="HighQuality"/>
                 <TextBlock Text="GestionVM  ·  Descar"
@@ -157,23 +155,23 @@
                            FontSize="13"
                            FontWeight="SemiBold"/>
             </StackPanel>
+
             <StackPanel Orientation="Horizontal"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Center"
                         Margin="0,0,8,0">
                 <Button Content="─" Style="{StaticResource WinBtnStyle}" Click="BtnMinimizar_Click"/>
-                <Button Content="✕" Style="{StaticResource CloseBtnStyle}"  Click="BtnCerrar_Click"/>
+                <Button Content="✕" Style="{StaticResource CloseBtnStyle}" Click="BtnCerrar_Click"/>
             </StackPanel>
         </Grid>
 
-        <!-- ── Info de usuario ── -->
         <Border Grid.Row="1" Background="#090F1E" Padding="20,0">
             <Border.Effect>
                 <DropShadowEffect Color="#000000" BlurRadius="8" ShadowDepth="2" Opacity="0.4" Direction="270"/>
             </Border.Effect>
+
             <Grid>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <!-- Avatar con inicial -->
                     <Border Width="40" Height="40" CornerRadius="20" Background="#1C355C">
                         <TextBlock x:Name="lblInicial"
                                    Foreground="#6A95FF"
@@ -182,14 +180,17 @@
                                    HorizontalAlignment="Center"
                                    VerticalAlignment="Center"/>
                     </Border>
-                    <!-- Nombre y rol -->
+
                     <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
                         <TextBlock x:Name="lblUsuario"
                                    Foreground="White"
                                    FontSize="14"
                                    FontWeight="SemiBold"/>
-                        <Border CornerRadius="4" Padding="7,2" Background="#111E33"
-                                HorizontalAlignment="Left" Margin="0,3,0,0">
+                        <Border CornerRadius="4"
+                                Padding="7,2"
+                                Background="#111E33"
+                                HorizontalAlignment="Left"
+                                Margin="0,3,0,0">
                             <TextBlock x:Name="lblRol"
                                        Foreground="#6A95FF"
                                        FontSize="11"
@@ -198,22 +199,33 @@
                     </StackPanel>
                 </StackPanel>
 
-                <!-- Botón cerrar sesión -->
-                <Button x:Name="btnCerrarSesion"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Center"
-                        Style="{StaticResource ActualizarBtnStyle}"
-                        Foreground="#CC5555"
-                        Click="BtnCerrarSesion_Click">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="⇦" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="Cerrar sesión" FontSize="12" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
+                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center">
+                    <Button x:Name="btnAdministracion"
+                            Margin="0,0,10,0"
+                            Style="{StaticResource ActualizarBtnStyle}"
+                            Visibility="Collapsed"
+                            Click="BtnAdministracion_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="⚙" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Administración" FontSize="12" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button x:Name="btnCerrarSesion"
+                            Style="{StaticResource ActualizarBtnStyle}"
+                            Foreground="#CC5555"
+                            Click="BtnCerrarSesion_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="⇦" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Cerrar sesión" FontSize="12" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
             </Grid>
         </Border>
 
-        <!-- ── Tarjetas de VMs ── -->
         <ScrollViewer Grid.Row="2"
                       VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled"
@@ -224,6 +236,7 @@
                         <WrapPanel/>
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
+
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Border Width="240"
@@ -232,9 +245,20 @@
                                 CornerRadius="12"
                                 Padding="18,16"
                                 ToolTipService.IsEnabled="{Binding EstadoActual, Converter={StaticResource EstadoVisibilidadConverter}}">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Opacity" Value="1"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Activa}" Value="False">
+                                            <Setter Property="Opacity" Value="0.38"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
                             <Border.Effect>
                                 <DropShadowEffect Color="#000000" BlurRadius="14" ShadowDepth="3" Opacity="0.35"/>
                             </Border.Effect>
+
                             <Border.ToolTip>
                                 <ToolTip Style="{StaticResource VMToolTipStyle}">
                                     <StackPanel>
@@ -261,8 +285,8 @@
                                     </StackPanel>
                                 </ToolTip>
                             </Border.ToolTip>
+
                             <StackPanel>
-                                <!-- Nombre VM -->
                                 <TextBlock Text="{Binding NombreVM}"
                                            Foreground="White"
                                            FontSize="15"
@@ -270,25 +294,39 @@
                                            TextTrimming="CharacterEllipsis"
                                            Margin="0,0,0,10"/>
 
-                                <!-- Badge de estado -->
                                 <Border CornerRadius="10"
                                         Padding="10,4"
                                         Margin="0,0,0,14"
-                                        HorizontalAlignment="Left"
-                                        Background="{Binding EstadoActual, Converter={StaticResource EstadoColorConverter}}">
+                                        HorizontalAlignment="Left">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="{Binding EstadoActual, Converter={StaticResource EstadoColorConverter}}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Activa}" Value="False">
+                                                    <Setter Property="Background" Value="#243040"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
                                     <StackPanel Orientation="Horizontal">
                                         <Ellipse Width="6" Height="6"
                                                  Fill="White" Opacity="0.7"
-                                                 VerticalAlignment="Center"
-                                                 Margin="0,0,6,0"/>
-                                        <TextBlock Text="{Binding EstadoActual}"
-                                                   Foreground="White"
-                                                   FontSize="12"
-                                                   FontWeight="SemiBold"/>
+                                                 VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                        <TextBlock Foreground="White" FontSize="12" FontWeight="SemiBold">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Text" Value="{Binding EstadoActual}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Activa}" Value="False">
+                                                            <Setter Property="Text" Value="Desactivada"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
                                     </StackPanel>
                                 </Border>
 
-                                <!-- Botón encender -->
                                 <Button Content="{Binding TextoBotonAccion}"
                                         Style="{StaticResource EncenderBtnStyle}"
                                         Click="BtnEncender_Click"
@@ -300,7 +338,6 @@
             </ItemsControl>
         </ScrollViewer>
 
-        <!-- ── Toast notificación RDP ── -->
         <Border x:Name="toastRdp"
                 Grid.RowSpan="4"
                 HorizontalAlignment="Right"
@@ -318,6 +355,7 @@
             <Border.Effect>
                 <DropShadowEffect Color="#000000" BlurRadius="16" ShadowDepth="4" Opacity="0.5"/>
             </Border.Effect>
+
             <StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                     <TextBlock Text="🖥️ " FontSize="13" VerticalAlignment="Center"/>
@@ -327,10 +365,12 @@
                                FontWeight="SemiBold"
                                VerticalAlignment="Center"/>
                 </StackPanel>
+
                 <TextBlock x:Name="toastRdpNombre"
                            Foreground="White"
                            FontSize="14"
                            FontWeight="Bold"/>
+
                 <TextBlock x:Name="toastRdpIp"
                            Foreground="#D7E3FF"
                            FontSize="11"
@@ -338,7 +378,6 @@
             </StackPanel>
         </Border>
 
-        <!-- ── Footer ── -->
         <Border Grid.Row="3" Background="#060D18" Padding="20,0">
             <Grid>
                 <TextBlock x:Name="lblUltimaActualizacion"
@@ -346,6 +385,7 @@
                            Foreground="#2A4060"
                            FontSize="11"
                            VerticalAlignment="Center"/>
+
                 <Button Content="Actualizar"
                         Style="{StaticResource ActualizarBtnStyle}"
                         HorizontalAlignment="Right"

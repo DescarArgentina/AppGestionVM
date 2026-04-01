@@ -10,7 +10,21 @@ namespace AppGestionDeVM.Models
         public string HostFisico { get; set; } = string.Empty;
         public string TipoHypervisor { get; set; } = string.Empty;
         public string NombreTecnicoVM { get; set; } = string.Empty;
-        public bool Activa { get; set; }
+        private bool _activa;
+        public bool Activa
+        {
+            get => _activa;
+            set
+            {
+                if (_activa != value)
+                {
+                    _activa = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(BotonAccionHabilitado));
+                    OnPropertyChanged(nameof(TextoBotonAccion));
+                }
+            }
+        }
         public int OrdenBoton { get; set; }
         public string RutaVMX { get; set; } = string.Empty;
 
@@ -75,7 +89,7 @@ namespace AppGestionDeVM.Models
         }
 
         public bool BotonAccionHabilitado
-            => !string.IsNullOrEmpty(_estadoActual);
+            => Activa && !string.IsNullOrEmpty(_estadoActual);
 
         public event PropertyChangedEventHandler? PropertyChanged;
         private void OnPropertyChanged([CallerMemberName] string? name = null)

@@ -101,6 +101,101 @@ namespace AppGestionDeVM.Services
             }
         }
 
+        public List<MaquinaVirtual> ObtenerTodasLasMaquinas()
+        {
+            var lista = new List<MaquinaVirtual>();
+            using var conn = new SqlConnection(_connectionString);
+            conn.Open();
+            const string query = @"
+                SELECT IdVM, NombreVM, HostFisico, TipoHypervisor, NombreTecnicoVM,
+                       Activa, EstadoActual, OrdenBoton, RutaVMX, UsuarioEncendio
+                FROM dbo.MaquinasVirtuales
+                ORDER BY OrdenBoton, NombreVM";
+            using var cmd = new SqlCommand(query, conn);
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                lista.Add(new MaquinaVirtual
+                {
+                    IdVM = Convert.ToInt32(reader["IdVM"]),
+                    NombreVM = reader["NombreVM"]?.ToString() ?? string.Empty,
+                    HostFisico = reader["HostFisico"]?.ToString() ?? string.Empty,
+                    TipoHypervisor = reader["TipoHypervisor"]?.ToString() ?? string.Empty,
+                    NombreTecnicoVM = reader["NombreTecnicoVM"]?.ToString() ?? string.Empty,
+                    Activa = Convert.ToBoolean(reader["Activa"]),
+                    EstadoActual = reader["EstadoActual"]?.ToString() ?? string.Empty,
+                    OrdenBoton = Convert.ToInt32(reader["OrdenBoton"]),
+                    RutaVMX = reader["RutaVMX"]?.ToString() ?? string.Empty,
+                    UsuarioEncendio = reader["UsuarioEncendio"]?.ToString() ?? string.Empty
+                });
+            }
+            return lista;
+        }
+
+        public void ToggleActivaVM(int idVM, bool activa)
+        {
+            using var conn = new SqlConnection(_connectionString);
+            conn.Open();
+            using var cmd = new SqlCommand(
+                "UPDATE dbo.MaquinasVirtuales SET Activa = @Activa WHERE IdVM = @IdVM", conn);
+            cmd.Parameters.AddWithValue("@Activa", activa);
+            cmd.Parameters.AddWithValue("@IdVM", idVM);
+            cmd.ExecuteNonQuery();
+        }
+
+        public List<UsuarioAdmin> ObtenerTodosLosUsuarios()
+        {
+            var lista = new List<UsuarioAdmin>();
+            using var conn = new SqlConnection(_connectionString);
+            conn.Open();
+            using var cmd = new SqlCommand(
+                "SELECT IdUsuario, Usuario, Rol, Activo FROM dbo.Usuarios ORDER BY Usuario", conn);
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                lista.Add(new UsuarioAdmin
+                {
+                    IdUsuario = Convert.ToInt32(reader["IdUsuario"]),
+                    Usuario = reader["Usuario"]?.ToString() ?? string.Empty,
+                    Rol = reader["Rol"]?.ToString() ?? string.Empty,
+                    Activo = Convert.ToBoolean(reader["Activo"])
+                });
+            }
+            return lista;
+        }
+
+        public void EliminarUsuario(int idUsuario)
+        {
+            using var conn = new SqlConnection(_connectionString);
+            conn.Open();
+            using var cmd = new SqlCommand(
+                "DELETE FROM dbo.Usuarios WHERE IdUsuario = @IdUsuario", conn);
+            cmd.Parameters.AddWithValue("@IdUsuario", idUsuario);
+            cmd.ExecuteNonQuery();
+        }
+
+        public void ActualizarUsuario(int idUsuario, string nuevoNombre, string nuevoRol)
+        {
+            using var conn = new SqlConnection(_connectionString);
+            conn.Open();
+
+            using (var cmdExiste = new SqlCommand(
+                "SELECT COUNT(1) FROM dbo.Usuarios WHERE Usuario = @Usuario AND IdUsuario <> @IdUsuario", conn))
+            {
+                cmdExiste.Parameters.AddWithValue("@Usuario", nuevoNombre);
+                cmdExiste.Parameters.AddWithValue("@IdUsuario", idUsuario);
+                if (Convert.ToInt32(cmdExiste.ExecuteScalar()) > 0)
+                    throw new Exception("Ya existe otro usuario con ese nombre.");
+            }
+
+            using var cmd = new SqlCommand(
+                "UPDATE dbo.Usuarios SET Usuario = @Usuario, Rol = @Rol WHERE IdUsuario = @IdUsuario", conn);
+            cmd.Parameters.AddWithValue("@Usuario", nuevoNombre);
+            cmd.Parameters.AddWithValue("@Rol", nuevoRol);
+            cmd.Parameters.AddWithValue("@IdUsuario", idUsuario);
+            cmd.ExecuteNonQuery();
+        }
+
         public void ActualizarUsuarioEncendio(int idVM, string usuario)
         {
             try

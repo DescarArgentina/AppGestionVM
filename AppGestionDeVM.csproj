@@ -10,10 +10,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Resource Include="Assets\logo.png"/>
+    <Resource Include="Assets\logo.png" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.0" />
     <PackageReference Include="System.Data.SqlClient" Version="4.9.1" />
     <PackageReference Include="System.Management" Version="9.0.0" />

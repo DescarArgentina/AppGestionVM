@@ -77,7 +77,7 @@ namespace AppGestionDeVM.Views
             try
             {
                 AuthService authService = new AuthService();
-                UsuarioSesion usuarioLogueado = authService.ValidarLogin(usuario, password);
+                UsuarioSesion? usuarioLogueado = authService.ValidarLogin(usuario, password);
 
                 if (usuarioLogueado == null)
                 {

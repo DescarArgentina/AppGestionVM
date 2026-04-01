@@ -1,0 +1,615 @@
+<Window x:Class="AppGestionDeVM.Views.AdminWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Administración"
+        Height="600"
+        Width="720"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        Background="#08111F">
+
+    <Window.Resources>
+
+        <!-- CheckBox oscuro -->
+        <Style x:Key="CheckBoxDarkStyle" TargetType="CheckBox">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <StackPanel Orientation="Horizontal">
+                            <Border x:Name="Bd" Width="18" Height="18" CornerRadius="3"
+                                    BorderBrush="#6A95FF" BorderThickness="1"
+                                    Background="#111E33" VerticalAlignment="Center">
+                                <Path x:Name="CheckMark" Visibility="Collapsed"
+                                      Stroke="White" StrokeThickness="2"
+                                      Data="M 3 9 L 7 13 L 14 4"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                      VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            </Border>
+                            <ContentPresenter Margin="8,0,0,0" VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#6A95FF"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#6A95FF"/>
+                                <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#8EB1FF"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Foreground" Value="#6E7F99"/>
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="TituloStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="22"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+
+        <Style x:Key="LabelStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
+
+        <Style x:Key="TextBoxStyle" TargetType="TextBox">
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Background" Value="#111E33"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#2F4F7A"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CaretBrush" Value="White"/>
+        </Style>
+
+        <Style x:Key="PasswordBoxStyle" TargetType="PasswordBox">
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Background" Value="#111E33"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#2F4F7A"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+
+        <!-- ComboBoxItem oscuro -->
+        <Style x:Key="ComboBoxItemDarkStyle" TargetType="ComboBoxItem">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="#111E33"/>
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#2A4070"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#1C3258"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ComboBox con dropdown oscuro -->
+        <Style x:Key="ComboBoxStyle" TargetType="ComboBox">
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="#111E33"/>
+            <Setter Property="BorderBrush" Value="#2F4F7A"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="6,2"/>
+            <Setter Property="ItemContainerStyle" Value="{StaticResource ComboBoxItemDarkStyle}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <Border Background="#111E33" BorderBrush="#2F4F7A" BorderThickness="1"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition Width="24"/>
+                                </Grid.ColumnDefinitions>
+                                <ContentPresenter x:Name="ContentSite"
+                                                  Grid.Column="0"
+                                                  IsHitTestVisible="False"
+                                                  Content="{TemplateBinding SelectionBoxItem}"
+                                                  ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                  Margin="8,0,0,0"
+                                                  VerticalAlignment="Center"
+                                                  HorizontalAlignment="Left"/>
+                                <ToggleButton Grid.Column="0" Grid.ColumnSpan="2"
+                                              Focusable="False"
+                                              IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                              Background="Transparent" BorderThickness="0"/>
+                                <Path Grid.Column="1"
+                                      IsHitTestVisible="False"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center"
+                                      Data="M 0 0 L 5 5 L 10 0 Z"
+                                      Fill="#A0B4CC"/>
+                            </Grid>
+                            <Popup x:Name="PART_Popup"
+                                   Placement="Bottom"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   AllowsTransparency="True"
+                                   Focusable="False"
+                                   PopupAnimation="Slide">
+                                <Border Background="#111E33"
+                                        BorderBrush="#2F4F7A"
+                                        BorderThickness="1"
+                                        MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                                        MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                    <ScrollViewer SnapsToDevicePixels="True">
+                                        <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Foreground" Value="#6E7F99"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Botones -->
+        <Style x:Key="BotonPrimarioStyle" TargetType="Button">
+            <Setter Property="Background" Value="#6A95FF"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Padding" Value="16,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#5580E0"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" Value="#2A3A55"/>
+                    <Setter Property="Foreground" Value="#6E7F99"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="BotonSecundarioStyle" TargetType="Button">
+            <Setter Property="Background" Value="#111E33"/>
+            <Setter Property="Foreground" Value="#D7E3FF"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Padding" Value="16,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#1C2D4A"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="BotonPeligroStyle" TargetType="Button">
+            <Setter Property="Background" Value="#6B1E1E"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Padding" Value="16,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#9A2A2A"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" Value="#2A1E1E"/>
+                    <Setter Property="Foreground" Value="#6E7F99"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- TabItem con template propio: texto siempre visible al seleccionar -->
+        <Style TargetType="TabItem">
+            <Setter Property="Foreground" Value="#8AA0BB"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="14,7"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="7,7,0,0"
+                                Padding="{TemplateBinding Padding}"
+                                Margin="0,0,2,0">
+                            <TextBlock x:Name="Txt"
+                                       Text="{TemplateBinding Header}"
+                                       Foreground="{TemplateBinding Foreground}"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#1A2E4A"/>
+                                <Setter TargetName="Txt" Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#12213A"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- DataGrid estilos -->
+        <Style x:Key="DgColumnHeaderStyle" TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#0A1525"/>
+            <Setter Property="Foreground" Value="#8AA0BB"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="BorderBrush" Value="#1A2E4A"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="11"/>
+        </Style>
+
+        <Style x:Key="DgCellStyle" TargetType="DataGridCell">
+            <Setter Property="Foreground" Value="#D0DFF0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="4,0"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="DgRowStyle" TargetType="DataGridRow">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="#1A2E4A"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#1A2E4A"/>
+                </Trigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#111E33"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="DgRowVmStyle" TargetType="DataGridRow">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="#1A2E4A"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="Opacity" Value="1"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Activa}" Value="False">
+                    <Setter Property="Opacity" Value="0.32"/>
+                </DataTrigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#1A2E4A"/>
+                </Trigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#111E33"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="14"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="14"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Panel de Administración"
+                   Style="{StaticResource TituloStyle}"/>
+
+        <Border Grid.Row="2" Background="#0C1524" CornerRadius="12" Padding="14">
+            <TabControl x:Name="tabControl" Background="#0C1524" BorderThickness="0"
+                        SelectionChanged="TabControl_SelectionChanged">
+
+                <!-- ═══ AGREGAR VM ═══ -->
+                <TabItem Header="Agregar VM">
+                    <Grid Margin="12">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="Nombre VM" Style="{StaticResource LabelStyle}"/>
+                        <TextBox x:Name="txtNombreVm" Grid.Row="1" Style="{StaticResource TextBoxStyle}"/>
+
+                        <TextBlock Grid.Row="3" Text="Ruta VMX" Style="{StaticResource LabelStyle}"/>
+                        <TextBox x:Name="txtRutaVmx" Grid.Row="4" Style="{StaticResource TextBoxStyle}"/>
+
+                        <TextBlock Grid.Row="6" Text="Orden del botón" Style="{StaticResource LabelStyle}"/>
+                        <TextBox x:Name="txtOrdenBoton" Grid.Row="7"
+                                 Width="120" HorizontalAlignment="Left" Text="0"
+                                 Style="{StaticResource TextBoxStyle}"/>
+
+                        <CheckBox x:Name="chkVmActiva" Grid.Row="9"
+                                  Content="VM activa" IsChecked="True"
+                                  Style="{StaticResource CheckBoxDarkStyle}"
+                                  VerticalAlignment="Center"/>
+
+                        <Button Grid.Row="11" Content="Guardar VM"
+                                Width="140" HorizontalAlignment="Left"
+                                Style="{StaticResource BotonPrimarioStyle}"
+                                Click="BtnGuardarVm_Click"/>
+                    </Grid>
+                </TabItem>
+
+                <!-- ═══ AGREGAR USUARIO ═══ -->
+                <TabItem Header="Agregar Usuario">
+                    <Grid Margin="12">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="Usuario" Style="{StaticResource LabelStyle}"/>
+                        <TextBox x:Name="txtUsuario" Grid.Row="1" Style="{StaticResource TextBoxStyle}"/>
+
+                        <TextBlock Grid.Row="3" Text="Contraseña" Style="{StaticResource LabelStyle}"/>
+                        <PasswordBox x:Name="txtPassword" Grid.Row="4" Style="{StaticResource PasswordBoxStyle}"/>
+
+                        <TextBlock Grid.Row="6" Text="Rol" Style="{StaticResource LabelStyle}"/>
+                        <ComboBox x:Name="cmbRolUsuario" Grid.Row="7"
+                                  Width="180" HorizontalAlignment="Left"
+                                  Style="{StaticResource ComboBoxStyle}">
+                            <ComboBoxItem Content="Administrador"/>
+                            <ComboBoxItem Content="Usuario"/>
+                        </ComboBox>
+
+                        <CheckBox x:Name="chkUsuarioActivo" Grid.Row="9"
+                                  Content="Usuario activo" IsChecked="True"
+                                  Style="{StaticResource CheckBoxDarkStyle}"
+                                  VerticalAlignment="Center"/>
+
+                        <Button Grid.Row="11" Content="Guardar Usuario"
+                                Width="140" HorizontalAlignment="Left"
+                                Style="{StaticResource BotonPrimarioStyle}"
+                                Click="BtnGuardarUsuario_Click"/>
+                    </Grid>
+                </TabItem>
+
+                <!-- ═══ EDITAR VM ═══ -->
+                <TabItem Header="Editar VM">
+                    <Grid Margin="0,8,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="8"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right">
+                            <TextBlock Text="Las VMs inactivas se muestran con menor opacidad."
+                                       Foreground="#6E7F99" FontSize="11"
+                                       VerticalAlignment="Center" Margin="0,0,12,0"/>
+                            <Button Content="Actualizar" Width="100"
+                                    Style="{StaticResource BotonSecundarioStyle}"
+                                    Click="BtnActualizarListaVMs_Click"/>
+                        </StackPanel>
+
+                        <DataGrid x:Name="dgVMs" Grid.Row="2"
+                                  AutoGenerateColumns="False"
+                                  Background="#0C1524" Foreground="White"
+                                  BorderThickness="0"
+                                  GridLinesVisibility="Horizontal"
+                                  HorizontalGridLinesBrush="#1A2E4A"
+                                  SelectionMode="Single" IsReadOnly="True"
+                                  CanUserResizeRows="False" CanUserSortColumns="False"
+                                  HeadersVisibility="Column" RowHeaderWidth="0"
+                                  ColumnHeaderStyle="{StaticResource DgColumnHeaderStyle}"
+                                  CellStyle="{StaticResource DgCellStyle}"
+                                  RowStyle="{StaticResource DgRowVmStyle}"
+                                  ScrollViewer.VerticalScrollBarVisibility="Auto">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Nombre VM"
+                                                    Binding="{Binding NombreVM}" Width="160"/>
+                                <DataGridTextColumn Header="Ruta VMX"
+                                                    Binding="{Binding RutaVMX}" Width="*"/>
+                                <DataGridTextColumn Header="Orden"
+                                                    Binding="{Binding OrdenBoton}" Width="55"/>
+                                <DataGridTemplateColumn Header="Acción" Width="110">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Tag="{Binding}"
+                                                    Click="BtnToggleVmActiva_Click"
+                                                    Height="26" Cursor="Hand"
+                                                    Padding="10,2" Margin="2,3">
+                                                <Button.Style>
+                                                    <Style TargetType="Button">
+                                                        <Setter Property="Content" Value="Desactivar"/>
+                                                        <Setter Property="Background" Value="#6B1E1E"/>
+                                                        <Setter Property="Foreground" Value="White"/>
+                                                        <Setter Property="BorderThickness" Value="0"/>
+                                                        <Setter Property="FontSize" Value="11"/>
+                                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                                        <Setter Property="Template">
+                                                            <Setter.Value>
+                                                                <ControlTemplate TargetType="Button">
+                                                                    <Border Background="{TemplateBinding Background}" CornerRadius="5">
+                                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                    </Border>
+                                                                </ControlTemplate>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Activa}" Value="False">
+                                                                <Setter Property="Content" Value="Activar"/>
+                                                                <Setter Property="Background" Value="#1E6040"/>
+                                                            </DataTrigger>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter Property="Opacity" Value="0.82"/>
+                                                            </Trigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </TabItem>
+
+                <!-- ═══ EDITAR USUARIO ═══ -->
+                <TabItem Header="Editar Usuario">
+                    <Grid Margin="0,8,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="10"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <DataGrid x:Name="dgUsuarios" Grid.Row="0"
+                                  AutoGenerateColumns="False"
+                                  Background="#0C1524" Foreground="White"
+                                  BorderThickness="0"
+                                  GridLinesVisibility="Horizontal"
+                                  HorizontalGridLinesBrush="#1A2E4A"
+                                  SelectionMode="Single" IsReadOnly="True"
+                                  CanUserResizeRows="False" CanUserSortColumns="False"
+                                  HeadersVisibility="Column" RowHeaderWidth="0"
+                                  ColumnHeaderStyle="{StaticResource DgColumnHeaderStyle}"
+                                  CellStyle="{StaticResource DgCellStyle}"
+                                  RowStyle="{StaticResource DgRowStyle}"
+                                  SelectionChanged="DgUsuarios_SelectionChanged"
+                                  ScrollViewer.VerticalScrollBarVisibility="Auto">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Usuario"
+                                                    Binding="{Binding Usuario}" Width="*"/>
+                                <DataGridTextColumn Header="Rol"
+                                                    Binding="{Binding Rol}" Width="140"/>
+                                <DataGridCheckBoxColumn Header="Activo"
+                                                        Binding="{Binding Activo}" Width="60"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <!-- Panel de edición (aparece al seleccionar un usuario) -->
+                        <Border x:Name="pnlEditarUsuario" Grid.Row="2"
+                                Background="#0A1828" CornerRadius="8"
+                                Padding="14,10" Visibility="Collapsed">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="160"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0" Text="Nombre"
+                                           Foreground="#8AA0BB" FontSize="11"
+                                           VerticalAlignment="Center"/>
+                                <TextBox x:Name="txtEditNombre" Grid.Column="2"
+                                         Style="{StaticResource TextBoxStyle}" Height="28"/>
+
+                                <TextBlock Grid.Column="4" Text="Rol"
+                                           Foreground="#8AA0BB" FontSize="11"
+                                           VerticalAlignment="Center"/>
+                                <ComboBox x:Name="cmbEditRol" Grid.Column="6"
+                                          Style="{StaticResource ComboBoxStyle}" Height="28">
+                                    <ComboBoxItem Content="Administrador"/>
+                                    <ComboBoxItem Content="Usuario"/>
+                                </ComboBox>
+
+                                <StackPanel Grid.Column="8" Orientation="Horizontal">
+                                    <Button Content="Guardar" Width="90" Margin="0,0,8,0"
+                                            Style="{StaticResource BotonPrimarioStyle}" Height="28"
+                                            Click="BtnGuardarCambiosUsuario_Click"/>
+                                    <Button Content="Eliminar" Width="90"
+                                            Style="{StaticResource BotonPeligroStyle}" Height="28"
+                                            Click="BtnEliminarUsuario_Click"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </TabItem>
+
+            </TabControl>
+        </Border>
+
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Cerrar" Width="110"
+                    Style="{StaticResource BotonSecundarioStyle}"
+                    Click="BtnCerrar_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

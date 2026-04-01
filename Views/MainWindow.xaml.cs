@@ -16,7 +16,7 @@ namespace AppGestionDeVM
         private readonly ObservableCollection<MaquinaVirtual> _maquinas = new();
         private readonly DispatcherTimer _timer = new();
 
-        // RDP monitoring
+        // Monitoreo RDP
         private readonly HashSet<string> _vmsMonitoreandoRdp = new(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> _rdpDeteccionEnCurso = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, DateTime> _rdpMomento = new(StringComparer.OrdinalIgnoreCase);
@@ -37,6 +37,8 @@ namespace AppGestionDeVM
                 ? _usuarioLogueado.Usuario[0].ToString().ToUpper()
                 : "?";
 
+            ConfigurarPermisos();
+
             icVMs.ItemsSource = _maquinas;
 
             await CargarMaquinas();
@@ -46,19 +48,51 @@ namespace AppGestionDeVM
             _timer.Start();
         }
 
+        private bool EsAdministrador()
+        {
+            return string.Equals(_usuarioLogueado?.Rol, "Administrador", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private void ConfigurarPermisos()
+        {
+            btnAdministracion.Visibility = EsAdministrador()
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+        }
+
+        private async void BtnAdministracion_Click(object sender, RoutedEventArgs e)
+        {
+            if (!EsAdministrador())
+            {
+                MessageBox.Show("No tenés permisos para acceder a esta opción.", "Acceso denegado",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var ventana = new AdminWindow();
+            ventana.Owner = this;
+            ventana.ShowDialog();
+
+            await CargarMaquinas();
+        }
+
         private async Task CargarMaquinas()
         {
             try
             {
-                var lista = await Task.Run(() => new VmService().ObtenerMaquinasActivas());
+                var lista = await Task.Run(() => EsAdministrador()
+                    ? new VmService().ObtenerTodasLasMaquinas()
+                    : new VmService().ObtenerMaquinasActivas());
 
-                // Eliminar VMs que ya no están activas
+                // Sincronizar lista observable
                 var nuevosIds = lista.Select(v => v.IdVM).ToHashSet();
                 for (int i = _maquinas.Count - 1; i >= 0; i--)
+                {
                     if (!nuevosIds.Contains(_maquinas[i].IdVM))
                         _maquinas.RemoveAt(i);
+                }
 
-                // Actualizar existentes / agregar nuevas (preserva RdpListo e Iniciando)
+                // Actualizar existentes / agregar nuevas
                 foreach (var vm in lista)
                 {
                     var existente = _maquinas.FirstOrDefault(v => v.IdVM == vm.IdVM);
@@ -72,6 +106,7 @@ namespace AppGestionDeVM
                         existente.RutaVMX = vm.RutaVMX;
                         existente.UsuarioEncendio = vm.UsuarioEncendio;
                         existente.OrdenBoton = vm.OrdenBoton;
+                        existente.Activa = vm.Activa;
                     }
                 }
 
@@ -94,32 +129,42 @@ namespace AppGestionDeVM
                 var svcDb = new VmService();
                 foreach (var vm in _maquinas)
                 {
+                    if (!vm.Activa) continue;
+
                     string nuevoEstado = encendidas.Contains(vm.RutaVMX) ? "Encendida" : "Apagada";
                     if (vm.EstadoActual != nuevoEstado)
                     {
                         vm.EstadoActual = nuevoEstado;
+
                         if (!string.Equals(nuevoEstado, "Encendida", StringComparison.OrdinalIgnoreCase))
                             vm.RdpListo = false;
+
                         await Task.Run(() => svcDb.ActualizarEstadoVM(vm.IdVM, nuevoEstado));
                     }
                 }
 
-                // ── Auto-iniciar monitoreo para VMs ya encendidas sin RDP listo ──
+                // Auto-iniciar monitoreo para VMs ya encendidas sin RDP listo
                 foreach (var vm in _maquinas)
                 {
-                    if (vm.EstadoActual == "Encendida" && !vm.RdpListo && !_vmsMonitoreandoRdp.Contains(vm.RutaVMX))
+                    if (vm.EstadoActual == "Encendida" &&
+                        !vm.RdpListo &&
+                        !_vmsMonitoreandoRdp.Contains(vm.RutaVMX))
+                    {
                         _vmsMonitoreandoRdp.Add(vm.RutaVMX);
+                    }
                 }
 
-                // ── Monitoreo RDP ──
+                // Monitoreo RDP
                 foreach (var vm in _maquinas)
                 {
-                    if (!_vmsMonitoreandoRdp.Contains(vm.RutaVMX)) continue;
-                    if (vm.EstadoActual != "Encendida") continue;
+                    if (!_vmsMonitoreandoRdp.Contains(vm.RutaVMX))
+                        continue;
+
+                    if (vm.EstadoActual != "Encendida")
+                        continue;
 
                     if (!_rdpDeteccionEnCurso.Contains(vm.RutaVMX))
                     {
-                        // Disparar detección en PC-26
                         _rdpDeteccionEnCurso.Add(vm.RutaVMX);
                         _rdpMomento[vm.RutaVMX] = DateTime.Now;
                         var ruta = vm.RutaVMX;
@@ -127,7 +172,6 @@ namespace AppGestionDeVM
                     }
                     else if ((DateTime.Now - _rdpMomento[vm.RutaVMX]).TotalSeconds >= 18)
                     {
-                        // Leer resultado
                         var ruta = vm.RutaVMX;
                         var ip = await Task.Run(() => svc.LeerEstadoRDP(ruta));
 
@@ -141,7 +185,6 @@ namespace AppGestionDeVM
                         }
                         else
                         {
-                            // No está listo aún, reintentar en el próximo ciclo
                             _rdpDeteccionEnCurso.Remove(ruta);
                             _rdpMomento.Remove(ruta);
                         }
@@ -168,7 +211,9 @@ namespace AppGestionDeVM
 
         private void ToastRdp_Click(object sender, MouseButtonEventArgs e)
         {
-            if (string.IsNullOrEmpty(_rdpIpActual)) return;
+            if (string.IsNullOrEmpty(_rdpIpActual))
+                return;
+
             Process.Start("mstsc.exe", $"/v:{_rdpIpActual}");
             toastRdp.Visibility = Visibility.Collapsed;
         }
@@ -200,25 +245,25 @@ namespace AppGestionDeVM
             btn.IsEnabled = false;
             vm.RdpListo = false;
             _vmsMonitoreandoRdp.Add(vm.RutaVMX);
+
             try
             {
-                System.Diagnostics.Debug.WriteLine($"[INFO] Encendiendo VM: IdVM={vm.IdVM}, NombreVM={vm.NombreVM}");
+                Debug.WriteLine($"[INFO] Encendiendo VM: IdVM={vm.IdVM}, NombreVM={vm.NombreVM}");
                 await Task.Run(() => new VmwareService().EncenderVM(vm.RutaVMX));
 
-                // Actualizar el usuario que encendió la VM en la BD
                 try
                 {
                     string usuarioLogueado = _usuarioLogueado.Usuario ?? "(sin usuario)";
-                    System.Diagnostics.Debug.WriteLine($"[INFO] Guardando usuario: IdVM={vm.IdVM}, Usuario={usuarioLogueado}");
+                    Debug.WriteLine($"[INFO] Guardando usuario: IdVM={vm.IdVM}, Usuario={usuarioLogueado}");
 
                     await Task.Run(() => new VmService().ActualizarUsuarioEncendio(vm.IdVM, usuarioLogueado));
                     vm.UsuarioEncendio = usuarioLogueado;
 
-                    System.Diagnostics.Debug.WriteLine($"[INFO] Usuario guardado exitosamente");
+                    Debug.WriteLine("[INFO] Usuario guardado exitosamente");
                 }
                 catch (Exception exDB)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[ERROR] Fallo al guardar usuario: {exDB.Message}");
+                    Debug.WriteLine($"[ERROR] Fallo al guardar usuario: {exDB.Message}");
                     MessageBox.Show($"Error al guardar usuario en BD:\n{exDB.Message}", "Error de base de datos",
                         MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
@@ -251,16 +296,17 @@ namespace AppGestionDeVM
                     _rdpMomento.Remove(vm.RutaVMX);
 
                     await Task.Run(() => svc.LanzarDeteccionRDP(vm.RutaVMX));
+
                     MessageBox.Show(
-                        "La VM está encendida, pero todavía no tenemos la IP de Escritorio Remoto. " +
-                        "Estamos validando la conexión y te va a aparecer el aviso cuando esté lista.",
+                        "La VM está encendida, pero todavía no tenemos la IP de Escritorio Remoto. Estamos validando la conexión y te va a aparecer el aviso cuando esté lista.",
                         "Conexión RDP en preparación",
                         MessageBoxButton.OK,
                         MessageBoxImage.Information);
+
                     return;
                 }
 
-                _rdpIpActual = ip;
+                _rdpIpActual = ip!;
                 Process.Start("mstsc.exe", $"/v:{ip}");
             }
             catch (Exception ex)
@@ -284,10 +330,14 @@ namespace AppGestionDeVM
         }
 
         private void BtnMinimizar_Click(object sender, RoutedEventArgs e)
-            => WindowState = WindowState.Minimized;
+        {
+            WindowState = WindowState.Minimized;
+        }
 
         private void BtnCerrar_Click(object sender, RoutedEventArgs e)
-            => Close();
+        {
+            Close();
+        }
 
         protected override void OnClosed(EventArgs e)
         {
